@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -20,6 +21,10 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import riderdependencytask.composeapp.generated.resources.Res
 import riderdependencytask.composeapp.generated.resources.compose_multiplatform
 import net.sourceforge.plantuml.SourceStringReader
+import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 
 @Composable
 @Preview
@@ -35,11 +40,39 @@ fun App() {
         val toggleStates = remember { mutableStateMapOf<String, Boolean>() }
         vertices.forEach { if (it !in toggleStates) toggleStates[it] = true }
 
-        val enabledVertices = toggleStates.filterValues { it }.keys
+        val umlSource = remember {generatePlantUMLSource(text, toggleStates.filter { it.value }) }
+
+        val imageBitMap = remember(umlSource)
+        {
+            renderPlantUMLtoImage(umlSource).toComposeImageBitmap()
+        }
+
 
         Box(
             modifier = Modifier.fillMaxSize().padding(16.dp),
         ) {
+
+            // Image box (PlantUML generated graph)
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+
+                Box(
+                    modifier = Modifier
+                        .size(200.dp, 300.dp)  // Adjust the size of the image
+                        .border(1.dp, Color.Gray)
+                        .align(Alignment.Start),
+                ) {
+                   Image(bitmap = imageBitMap, contentDescription = "Graph Diagram")
+                    Text(
+                        text = "Graph Image",  // Placeholder for the image
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                }
+            }
+
+
+            // toggle list box
             Box(
                 modifier =
                 Modifier
@@ -134,6 +167,35 @@ fun App() {
             }
         }
     }
+}
+
+private fun generatePlantUMLSource(
+    text: String,
+    enabledVertices: Map<String, Boolean>,
+): String {
+    val lines =
+        text.lines().mapNotNull { line ->
+            val parts = line.split("->").map { it.trim() }
+            if (parts.size == 2 && line in enabledVertices) {
+                "${parts[0]} --> ${parts[1]}"
+            } else {
+                null
+            }
+        }
+
+    return buildString {
+        appendLine("@startuml")
+        lines.forEach { appendLine(it) }
+        appendLine("@enduml")
+    }
+}
+
+private fun renderPlantUMLtoImage(umlSource: String): BufferedImage {
+    val reader = SourceStringReader(umlSource)
+    val os = ByteArrayOutputStream()
+    reader.generateImage(os)
+    val bytes = os.toByteArray()
+    return ImageIO.read(ByteArrayInputStream(bytes))
 }
 
 
