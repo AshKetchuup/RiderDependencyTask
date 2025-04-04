@@ -13,8 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -40,7 +43,30 @@ fun App() {
         val toggleStates = remember { mutableStateMapOf<String, Boolean>() }
         vertices.forEach { if (it !in toggleStates) toggleStates[it] = true }
 
-        val umlSource = remember {generatePlantUMLSource(text, toggleStates.filter { it.value }) }
+
+//
+//        val umlSource = remember {generatePlantUMLSource(text, toggleStates.filter { it.value }) }
+
+        val umlSource = remember(text, toggleStates) {
+            generatePlantUMLSource(text, toggleStates.filter { it.value })
+        }
+        // State for holding the rendered image
+        var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+
+        LaunchedEffect(umlSource) {
+            // Run in background thread
+            val bitmap = withContext(Dispatchers.IO) {
+                try {
+                    renderPlantUMLtoImage(umlSource).toComposeImageBitmap()
+                } catch (e: Exception) {
+                    // Handle rendering errors
+                    null
+                }
+            }
+            // Update UI on main thread
+            imageBitmap = bitmap
+        }
+
 
         val imageBitMap = remember(umlSource)
         {
@@ -59,15 +85,14 @@ fun App() {
 
                 Box(
                     modifier = Modifier
-                        .size(200.dp, 300.dp)  // Adjust the size of the image
+                        .size(500.dp, 360.dp)  // Adjust the size of the image
                         .border(1.dp, Color.Gray)
                         .align(Alignment.Start),
                 ) {
-                   Image(bitmap = imageBitMap, contentDescription = "Graph Diagram")
-                    Text(
-                        text = "Graph Image",  // Placeholder for the image
-                        modifier = Modifier.align(Alignment.Center),
-                    )
+                 imageBitMap?.let {
+                     Image(bitmap = it, contentDescription = "Graph Diagram",
+                         modifier = Modifier.fillMaxSize())
+                 } ?: Text("Loading ...", modifier = Modifier.align(Alignment.Center))
                 }
             }
 
