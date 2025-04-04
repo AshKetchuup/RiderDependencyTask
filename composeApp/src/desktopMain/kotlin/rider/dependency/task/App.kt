@@ -19,6 +19,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import riderdependencytask.composeapp.generated.resources.Res
 import riderdependencytask.composeapp.generated.resources.compose_multiplatform
+import net.sourceforge.plantuml.SourceStringReader
 
 @Composable
 @Preview
@@ -134,3 +135,6 @@ fun App() {
         }
     }
 }
+
+
+

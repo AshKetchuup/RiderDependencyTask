@@ -25,6 +25,7 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation("net.sourceforge.plantuml:plantuml:1.2024.4")
         }
     }
 }
