@@ -194,9 +194,8 @@ private fun generatePlantUMLSource(
     val lines =
         text.lines().mapNotNull { line ->
             val parts = line.split("->").map { it.trim() }
-            if (parts.size == 2 
-
-                //toggleStates[parts[0]] == true && toggleStates[parts[1]] == true
+            if (parts.size == 2 &&
+                toggleStates["${parts[0]}->${parts[1]}"] == true
                 ) {
                 "${parts[0]} --> ${parts[1]}"
             } else {
@@ -205,14 +204,20 @@ private fun generatePlantUMLSource(
         }
     println(lines.forEach{it.toString()})
 
+
     return buildString {
         appendLine("@startuml")
         lines.forEach { appendLine(it) }
         appendLine("@enduml")
     }
+
+
 }
 
 private fun renderPlantUMLtoImage(umlSource: String): BufferedImage {
+
+
+
     val reader = SourceStringReader(umlSource)
     val os = ByteArrayOutputStream()
     reader.generateImage(os)
