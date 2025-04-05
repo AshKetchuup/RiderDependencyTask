@@ -38,21 +38,20 @@ fun App() {
         // by lets you access the property directly (no neeed to put text.value as text is a property)
         // remember means  that whenver UI changes the state, Compose recomposes everything so if you don't use remember, state would reset every time
 
-        val vertices = text.split("\n").filter { it.isNotBlank() }
-
+        val edges = text.split("\n").filter { it.isNotBlank() }
         val toggleStates = remember { mutableStateMapOf<String, Boolean>() }
-        vertices.forEach { if (it !in toggleStates) toggleStates[it] = true }
+        edges.forEach { if (it !in toggleStates) toggleStates[it] = true }
 
-
-//
-//        val umlSource = remember {generatePlantUMLSource(text, toggleStates.filter { it.value }) }
-
-        val umlSource = remember(text, toggleStates) {
+        println(toggleStates.filter { it.value })
+        val umlSource = remember(text, toggleStates)
+        {
             generatePlantUMLSource(text, toggleStates.filter { it.value })
         }
+
         // State for holding the rendered image
         var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
+        // Use LaunchedEffect to handle async rendering
         LaunchedEffect(umlSource) {
             // Run in background thread
             val bitmap = withContext(Dispatchers.IO) {
@@ -65,12 +64,6 @@ fun App() {
             }
             // Update UI on main thread
             imageBitmap = bitmap
-        }
-
-
-        val imageBitMap = remember(umlSource)
-        {
-            renderPlantUMLtoImage(umlSource).toComposeImageBitmap()
         }
 
 
@@ -89,7 +82,7 @@ fun App() {
                         .border(1.dp, Color.Gray)
                         .align(Alignment.Start),
                 ) {
-                 imageBitMap?.let {
+                 imageBitmap?.let {
                      Image(bitmap = it, contentDescription = "Graph Diagram",
                          modifier = Modifier.fillMaxSize())
                  } ?: Text("Loading ...", modifier = Modifier.align(Alignment.Center))
@@ -106,7 +99,7 @@ fun App() {
                     .border(1.dp, Color.Gray),
             ) {
                 Text(
-                    text = "List of vertices",
+                    text = "List of edges",
                     modifier =
                     Modifier
                         .align(Alignment.TopStart)
@@ -127,7 +120,7 @@ fun App() {
                             .padding(top = 24.dp)
                             .verticalScroll(scrollState),
                     ) {
-                        vertices.forEach { vertex ->
+                        edges.forEach { vertex ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier =
@@ -162,7 +155,7 @@ fun App() {
                 verticalAlignment = Alignment.Bottom,
             ) {
                 val scrollState = rememberScrollState()
-                Text("Enter vertices:")
+                Text("Enter edges:")
 
                 Box(
                     modifier =
@@ -196,17 +189,21 @@ fun App() {
 
 private fun generatePlantUMLSource(
     text: String,
-    enabledVertices: Map<String, Boolean>,
+    toggleStates: Map<String, Boolean>,
 ): String {
     val lines =
         text.lines().mapNotNull { line ->
             val parts = line.split("->").map { it.trim() }
-            if (parts.size == 2 && line in enabledVertices) {
+            if (parts.size == 2 
+
+                //toggleStates[parts[0]] == true && toggleStates[parts[1]] == true
+                ) {
                 "${parts[0]} --> ${parts[1]}"
             } else {
                 null
             }
         }
+    println(lines.forEach{it.toString()})
 
     return buildString {
         appendLine("@startuml")
