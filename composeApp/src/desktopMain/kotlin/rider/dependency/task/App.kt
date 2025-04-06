@@ -36,8 +36,23 @@ fun App() {
         // remember means  that whenver UI changes the state, Compose recomposes everything so if you don't use remember, state would reset every time
 
         val edges = text.split("\n").filter { it.isNotBlank() }
+        // toggleStates should be for each VERTEX
         val toggleStates = remember { mutableStateMapOf<String, Boolean>() }
-        edges.forEach { if (it !in toggleStates) toggleStates[it] = true }
+        edges.forEach { s ->
+
+            val parts = s.split("->").map { it.trim() }
+            if(parts.size == 2 && !parts.contains(""))
+            {
+                println(parts)
+                if (parts[0] !in toggleStates)
+                    toggleStates[parts[0]] = true
+
+                if (parts[1] !in toggleStates)
+                    toggleStates[parts[1]] = true
+            }
+
+
+        }
 
 
 
@@ -46,8 +61,8 @@ fun App() {
 
         // Use LaunchedEffect to handle async rendering
         LaunchedEffect(text,toggleStates.toMap()) {
-            val activeEdges = toggleStates.filter{it.value== true}
-            val umlSource = generatePlantUMLSource(text,activeEdges)
+            val activeVertices = toggleStates.filter{ it.value }
+            val umlSource = generatePlantUMLSource(text,activeVertices)
 
 
             // Run in background thread
@@ -111,7 +126,7 @@ fun App() {
                     .background(Color(0xFFF8F8F8)),
             ) {
                 Text(
-                    text = "Edge List",
+                    text = "Vertex List",
                     style = MaterialTheme.typography.h6
                     ,
                     modifier = Modifier.padding(12.dp)
@@ -125,7 +140,7 @@ fun App() {
                             .verticalScroll(scrollState)
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     ) {
-                        edges.forEach { edge ->
+                        toggleStates.keys.forEach { vertex ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
@@ -133,11 +148,11 @@ fun App() {
                                     .padding(vertical = 4.dp)
                             ) {
                                 Switch(
-                                    checked = toggleStates[edge] == true,
-                                    onCheckedChange = { toggleStates[edge] = it }
+                                    checked = toggleStates[vertex] == true,
+                                    onCheckedChange = { toggleStates[vertex] = it }
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text(edge)
+                                Text(vertex)
                             }
                         }
                     }
@@ -201,7 +216,8 @@ private fun generatePlantUMLSource(
         text.lines().mapNotNull { line ->
             val parts = line.split("->").map { it.trim() }
             if (parts.size == 2 &&
-                toggleStates["${parts[0]}->${parts[1]}"] == true
+                toggleStates[parts[0]] == true &&
+                toggleStates[parts[1]] == true
                 ) {
                 "circle ${parts[0]}\n"+ "circle ${parts[1]}\n"+
                 "${parts[0]} --> ${parts[1]}\n"
