@@ -5,10 +5,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Switch
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,8 +39,8 @@ fun App() {
         val toggleStates = remember { mutableStateMapOf<String, Boolean>() }
         edges.forEach { if (it !in toggleStates) toggleStates[it] = true }
 
-        println(toggleStates.filter { it.value })
-        val umlSource = remember(text, toggleStates)
+
+        val umlSource = remember(text, toggleStates) // recomposes when either text or togglestates change
         {
             generatePlantUMLSource(text, toggleStates.filter { it.value })
         }
@@ -60,6 +57,7 @@ fun App() {
                 } catch (e: Exception) {
                     // Handle rendering errors
                     null
+                    // puts a loading screen
                 }
             }
             // Update UI on main thread
@@ -184,6 +182,8 @@ fun App() {
                 }
             }
         }
+
+
     }
 }
 
@@ -197,16 +197,17 @@ private fun generatePlantUMLSource(
             if (parts.size == 2 &&
                 toggleStates["${parts[0]}->${parts[1]}"] == true
                 ) {
-                "${parts[0]} --> ${parts[1]}"
+                "circle ${parts[0]}\n"+ "circle ${parts[1]}\n"+
+                "${parts[0]} --> ${parts[1]}\n"
             } else {
                 null
             }
         }
-    println(lines.forEach{it.toString()})
 
 
     return buildString {
         appendLine("@startuml")
+        appendLine("left to right direction")
         lines.forEach { appendLine(it) }
         appendLine("@enduml")
     }
@@ -215,9 +216,6 @@ private fun generatePlantUMLSource(
 }
 
 private fun renderPlantUMLtoImage(umlSource: String): BufferedImage {
-
-
-
     val reader = SourceStringReader(umlSource)
     val os = ByteArrayOutputStream()
     reader.generateImage(os)
