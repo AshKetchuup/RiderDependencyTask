@@ -40,22 +40,23 @@ fun App() {
         edges.forEach { if (it !in toggleStates) toggleStates[it] = true }
 
 
-        val umlSource = remember(text, toggleStates) // recomposes when either text or togglestates change
-        {
-            generatePlantUMLSource(text, toggleStates.filter { it.value })
-        }
 
         // State for holding the rendered image
         var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
         // Use LaunchedEffect to handle async rendering
-        LaunchedEffect(umlSource) {
+        LaunchedEffect(text,toggleStates.toMap()) {
+            val activeEdges = toggleStates.filter{it.value== true}
+            val umlSource = generatePlantUMLSource(text,activeEdges)
+
+
             // Run in background thread
             val bitmap = withContext(Dispatchers.IO) {
                 try {
                     renderPlantUMLtoImage(umlSource).toComposeImageBitmap()
                 } catch (e: Exception) {
                     // Handle rendering errors
+                    println("Error rendering image: ${e.message}")
                     null
                     // puts a loading screen
                 }
@@ -65,123 +66,6 @@ fun App() {
         }
 
 
-//        Box(
-//            modifier = Modifier.fillMaxSize().padding(16.dp),
-//        ) {
-//
-//            // Image box (PlantUML generated graph)
-//            Column(
-//                modifier = Modifier.fillMaxSize()
-//            ) {
-//
-//                Box(
-//                    modifier = Modifier
-//                        .size(500.dp, 360.dp)  // Adjust the size of the image
-//                        .border(1.dp, Color.Gray)
-//                        .align(Alignment.Start),
-//                ) {
-//                 imageBitmap?.let {
-//                     Image(bitmap = it, contentDescription = "Graph Diagram",
-//                         modifier = Modifier.fillMaxSize())
-//                 } ?: Text("Loading ...", modifier = Modifier.align(Alignment.Center))
-//                }
-//            }
-//
-//
-//            // toggle list box
-//            Box(
-//                modifier =
-//                Modifier
-//                    .size(200.dp, 400.dp)
-//                    .align(Alignment.TopEnd)
-//                    .border(1.dp, Color.Gray),
-//            ) {
-//                Text(
-//                    text = "List of edges",
-//                    modifier =
-//                    Modifier
-//                        .align(Alignment.TopStart)
-//                        .offset(y = (-24).dp),
-//                )
-//
-//                Box(
-//                    modifier =
-//                    Modifier
-//                        .fillMaxSize()
-//                        .border(1.dp, Color.Gray),
-//                ) {
-//                    val scrollState = rememberScrollState()
-//                    Column(
-//                        modifier =
-//                        Modifier
-//                            .fillMaxSize()
-//                            .padding(top = 24.dp)
-//                            .verticalScroll(scrollState),
-//                    ) {
-//                        edges.forEach { vertex ->
-//                            Row(
-//                                verticalAlignment = Alignment.CenterVertically,
-//                                modifier =
-//                                Modifier
-//                                    .fillMaxWidth()
-//                                    .padding(horizontal = 8.dp, vertical = 4.dp),
-//                            ) {
-//                                Switch(
-//                                    checked = toggleStates[vertex] == true,
-//                                    onCheckedChange = { toggleStates[vertex] = it },
-//                                )
-//                                Spacer(modifier = Modifier.width(8.dp))
-//                                Text(text = vertex)
-//                            }
-//                        }
-//                    }
-//
-//                    VerticalScrollbar(
-//                        adapter = ScrollbarAdapter(scrollState),
-//                        modifier = Modifier.align(Alignment.CenterEnd),
-//                    )
-//                }
-//            }
-//
-//            // Vertices input
-//            Row(
-//                modifier =
-//                Modifier
-//                    .fillMaxWidth()
-//                    .align(Alignment.BottomCenter)
-//                    .padding(16.dp),
-//                verticalAlignment = Alignment.Bottom,
-//            ) {
-//                val scrollState = rememberScrollState()
-//                Text("Enter edges:")
-//
-//                Box(
-//                    modifier =
-//                    Modifier
-//                        .height(100.dp)
-//                        .fillMaxWidth()
-//                        .background(Color.LightGray, shape = RoundedCornerShape(8.dp))
-//                        .padding(8.dp),
-//                ) {
-//                    BasicTextField(
-//                        value = text,
-//                        onValueChange = { newText ->
-//                            text = newText
-//                        },
-//                        modifier =
-//                        Modifier
-//                            .fillMaxSize()
-//                            .verticalScroll(scrollState),
-//                        maxLines = Int.MAX_VALUE,
-//                    )
-//
-//                    VerticalScrollbar(
-//                        modifier = Modifier.align(Alignment.CenterEnd),
-//                        adapter = rememberScrollbarAdapter(scrollState),
-//                    )
-//                }
-//            }
-//        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
