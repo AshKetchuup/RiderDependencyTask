@@ -27,8 +27,6 @@ import javax.imageio.ImageIO
 fun App() {
     MaterialTheme {
         var text by remember { mutableStateOf("") }
-        // by lets you access the property directly (no need to put text.value as text is a property)
-        // remember means  that whenever UI changes the state, Compose recomposes everything so if you don't use remember, state would reset every time
 
         val edges = text.split("\n").filter { it.isNotBlank() }
 
@@ -45,25 +43,19 @@ fun App() {
             }
         }
 
-        // State for holding the rendered image
+        // state for holding the rendered image
         var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
-        // Use LaunchedEffect to handle async rendering
+
         LaunchedEffect(text, toggleStates.toMap())
-        // coroutine (better thread) that that handles plantUML graph generation without freezing the UI
-        {
+     {
             val activeVertices = toggleStates.filter { it.value }
             val umlSource = generatePlantUMLSource(text, activeVertices)
 
             val bitmap =
                 withContext(Dispatchers.IO) {
                     // runs a thread in the background for optimisation
-                    try {
-                        renderPlantUMLtoImage(umlSource).toComposeImageBitmap()
-                    } catch (e: Exception) {
-                        println("Error rendering image: ${e.message}")
-                        null
-                    }
+                        convertPlantUMLtoImage(umlSource).toComposeImageBitmap()
                 }
             // then updates UI on main thread
             imageBitmap = bitmap
@@ -75,7 +67,7 @@ fun App() {
                     .fillMaxSize()
                     .padding(16.dp),
         ) {
-            // Graph Display Area
+            // Graph display
             Column(
                 modifier =
                     Modifier
@@ -102,11 +94,11 @@ fun App() {
                             contentDescription = "Generated Graph",
                             modifier = Modifier.fillMaxSize(),
                         )
-                    } ?: Text("Loading...", style = MaterialTheme.typography.body2)
+                    }
                 }
             }
 
-            // Vertex Toggle Panel
+            // Vertex Toggle area
             Column(
                 modifier =
                     Modifier
@@ -158,7 +150,7 @@ fun App() {
                 }
             }
 
-            // Input Field at Bottom
+            // Input edge
             Column(
                 modifier =
                     Modifier
@@ -239,7 +231,7 @@ fun generatePlantUMLSource(
 }
 
 // generates bufferedImage by making bytearray from umlSource
-private fun renderPlantUMLtoImage(umlSource: String): BufferedImage {
+private fun convertPlantUMLtoImage(umlSource: String): BufferedImage {
     val reader = SourceStringReader(umlSource)
     val os = ByteArrayOutputStream()
     reader.generateImage(os)

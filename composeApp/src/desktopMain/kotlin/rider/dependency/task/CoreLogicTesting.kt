@@ -2,6 +2,8 @@ package rider.dependency.task
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+// Because I already made sure to check that the UI doesn't freeze
+// added independent unit tests to ensure that I test the logic separate from UI
 class CoreLogicTesting {
     @Test
     fun `should generate correct UML source`() {
