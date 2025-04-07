@@ -21,14 +21,22 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
+            implementation("junit:junit:4.13.2")
+            implementation( "org.jetbrains.kotlin:kotlin-test:1.8.0")
+            implementation("org.jetbrains.kotlin:kotlin-test-junit:1.8.0")
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation("net.sourceforge.plantuml:plantuml:1.2024.4")
+
         }
+
+
     }
 }
+
+
 
 
 compose.desktop {

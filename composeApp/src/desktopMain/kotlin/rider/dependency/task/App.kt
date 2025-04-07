@@ -38,8 +38,8 @@ fun App() {
 
             val parts = s.split("->").map { it.trim() }
             if (parts.size == 2 && !parts.contains("")) {
-                println(parts)
-                // lazy populate it when vertices are toggled or accessed
+
+                // lazy populates when vertices are toggled or accessed
                 toggleStates.getOrPut(parts[0]) { true }
                 toggleStates.getOrPut(parts[1]) { true }
             }
@@ -203,7 +203,7 @@ fun App() {
     }
 }
 
-private fun generatePlantUMLSource(
+fun generatePlantUMLSource(
     text: String,
     toggleStates: Map<String, Boolean>,
 ): String {
@@ -214,9 +214,17 @@ private fun generatePlantUMLSource(
                 toggleStates[parts[0]] == true &&
                 toggleStates[parts[1]] == true
             ) {
+
+                if(parts[0] != parts[1])
                 // adds each vertex as a circle then makes the connection
                 "circle ${parts[0]}\n" + "circle ${parts[1]}\n" +
                     "${parts[0]} --> ${parts[1]}\n"
+
+                // dont add duplicate nodes to Uml
+                else
+                    "circle ${parts[0]}\n"+
+                            "${parts[0]} --> ${parts[1]}\n"
+
             } else {
                 null
             }
@@ -227,10 +235,10 @@ private fun generatePlantUMLSource(
         appendLine("left to right direction")
         lines.forEach { appendLine(it) }
         appendLine("@enduml")
-    }
+    }.trim()
 }
 
-// generates bufferedImage by makining bytearray from umlSource
+// generates bufferedImage by making bytearray from umlSource
 private fun renderPlantUMLtoImage(umlSource: String): BufferedImage {
     val reader = SourceStringReader(umlSource)
     val os = ByteArrayOutputStream()
